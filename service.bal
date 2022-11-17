@@ -2,10 +2,22 @@ import ballerina/http;
 import ramith/maps_api;
 import ballerina/log;
 import ramith/kyc_api;
+import ballerinax/mssql;
+import ballerina/sql;
 
 configurable string clientSecret = ?;
 
 configurable string clientId = ?;
+
+configurable string databaseHost = ?;
+
+configurable string databaseUsername = ?;
+
+configurable string databaseUserpassword = ?;
+
+configurable string databaseName = ?;
+
+configurable int databasePort = ?;
 
 public type Customer record {
     string accountId;
@@ -70,7 +82,20 @@ function validateKyc(string accountId) returns boolean|error {
     return true;
 }
 
-function reprocessKyc(string accountId) {
-    
-    // store the account id in mysql table (insert into reprocess_kyc values (account_Idd))
+function reprocessKyc(string accountId) returns error?{
+    mssql:Client mssqlEp = check new (
+        host = databaseHost,
+        user = databaseUsername,
+        password = databaseUserpassword,
+        database = databaseName,
+        port = databasePort
+    );
+
+    Customer|sql:Error queryRowResponse = check mssqlEp->queryRow(
+        sqlQuery = `INSERT INTO reprocess_kyc (account_Id) values (${accountId})`
+    );
+
+    if queryRowResponse is error {
+        return error("error occurred while reprocessing the kyc");
+    }
 }
