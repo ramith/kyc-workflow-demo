@@ -31,6 +31,7 @@ public type Customer record {
 service / on new http:Listener(9090) {
 
     resource function post validate(@http:Payload Customer[] customers) returns error? {
+        map<future<error?>> childProcesses = {};
 
         foreach Customer c in customers {
             log:printInfo("validating customer:", accountId = c.accountId, name = string `${c.firstName} ${c.lastName}`);
@@ -43,7 +44,22 @@ service / on new http:Listener(9090) {
             if !validKyc {
                 _ = check reprocessKyc(c.accountId);
             }
+
+            // send the customer info systems of record.
+            future<error?> asyncResult = start sendToSystemOfRecords(c.accountId);
+            childProcesses[c.accountId] = asyncResult;
         }
+
+        foreach [string, future<error?>] entry in childProcesses.entries() {
+            var [accountId, outcome] = entry;
+            error? err = wait outcome;
+            if err is () {
+                log:printInfo("sending customer information to system of records was successful", accountId = accountId);
+            } else {
+                log:printError("error occured while sending information to system of records", err);
+            }
+        }
+
     }
 
 }
@@ -82,7 +98,7 @@ function validateKyc(string accountId) returns boolean|error {
     return true;
 }
 
-function reprocessKyc(string accountId) returns error?{
+function reprocessKyc(string accountId) returns error? {
     mssql:Client mssqlEp = check new (
         host = databaseHost,
         user = databaseUsername,
@@ -98,4 +114,8 @@ function reprocessKyc(string accountId) returns error?{
     if queryRowResponse is error {
         return error("error occurred while reprocessing the kyc");
     }
+}
+
+function sendToSystemOfRecords(string accountId) returns error? {
+    log:printInfo("sending to system of records", accNo = accountId);
 }
