@@ -15,12 +15,37 @@
             "clientId": {
               "type": "string",
               "description": ""
+            },
+            "databaseHost": {
+              "type": "string",
+              "description": ""
+            },
+            "databaseUsername": {
+              "type": "string",
+              "description": ""
+            },
+            "databaseUserpassword": {
+              "type": "string",
+              "description": ""
+            },
+            "databaseName": {
+              "type": "string",
+              "description": ""
+            },
+            "databasePort": {
+              "type": "integer",
+              "description": ""
             }
           },
           "additionalProperties": false,
           "required": [
             "clientSecret",
-            "clientId"
+            "clientId",
+            "databaseHost",
+            "databaseUsername",
+            "databaseUserpassword",
+            "databaseName",
+            "databasePort"
           ]
         }
       },

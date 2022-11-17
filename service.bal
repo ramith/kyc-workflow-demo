@@ -41,7 +41,7 @@ service / on new http:Listener(9090) {
 
             boolean validKyc = check validateKyc(c.accountId);
             if !validKyc {
-                reprocessKyc(c.accountId);
+                _ = check reprocessKyc(c.accountId);
             }
         }
     }
