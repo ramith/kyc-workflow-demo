@@ -71,5 +71,6 @@ function validateKyc(string accountId) returns boolean|error {
 }
 
 function reprocessKyc(string accountId) {
+    
     // store the account id in mysql table (insert into reprocess_kyc values (account_Idd))
 }
