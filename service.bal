@@ -2,22 +2,23 @@ import ballerina/http;
 import ramith/maps_api;
 import ballerina/log;
 import ramith/kyc_api;
-import ballerinax/mssql;
+import ballerinax/mysql;
+import ballerinax/mysql.driver as _;
 import ballerina/sql;
 
 configurable string clientSecret = ?;
 
 configurable string clientId = ?;
 
-configurable string databaseHost = ?;
+configurable string dbHost = ?;
 
-configurable string databaseUsername = ?;
+configurable string dbUser = ?;
 
-configurable string databaseUserpassword = ?;
+configurable string dbPassword = ?;
 
-configurable string databaseName = ?;
+configurable string dbName = ?;
 
-configurable int databasePort = ?;
+configurable int dbPort = ?;
 
 public type Customer record {
     string accountId;
@@ -25,6 +26,14 @@ public type Customer record {
     string lastName;
     maps_api:Address address;
 };
+
+mysql:Client mysqlEp = check new (
+    host = dbHost,
+    user = dbUser,
+    password = dbPassword,
+    database = dbName,
+    port = dbPort
+);
 
 # A service representing a network-accessible API
 # bound to port `9090`.
@@ -56,7 +65,7 @@ service / on new http:Listener(9090) {
             if err is () {
                 log:printInfo("sending customer information to system of records was successful", accountId = accountId);
             } else {
-                log:printError("error occured while sending information to system of records", err);
+                log:printError("error occurred while sending information to system of records", err);
             }
         }
 
@@ -99,20 +108,11 @@ function validateKyc(string accountId) returns boolean|error {
 }
 
 function reprocessKyc(string accountId) returns error? {
-    mssql:Client mssqlEp = check new (
-        host = databaseHost,
-        user = databaseUsername,
-        password = databaseUserpassword,
-        database = databaseName,
-        port = databasePort
-    );
-
-    Customer|sql:Error queryRowResponse = check mssqlEp->queryRow(
+    sql:ExecutionResult|error executeResponse = mysqlEp->execute(
         sqlQuery = `INSERT INTO reprocess_kyc (account_Id) values (${accountId})`
     );
-
-    if queryRowResponse is error {
-        return error("error occurred while reprocessing the kyc");
+    if executeResponse is error {
+        return error(string `error occurred while reprocessing the kyc for the customer: ${accountId}`);
     }
 }
 
