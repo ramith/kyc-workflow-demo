@@ -7,6 +7,7 @@ import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
 import ballerina/time;
 import ballerina/sql;
+import ballerina/regex;
 
 configurable string clientSecret = ?;
 configurable string clientId = ?;
@@ -18,8 +19,11 @@ configurable string dbName = ?;
 configurable int dbPort = ?;
 
 public type Customer record {
+    @sql:Column { name: "account_id" }
     string accountId;
+    @sql:Column { name: "first_name" }
     string firstName;
+    @sql:Column { name: "last_name" }
     string lastName;
     maps_api:Address address;
 };
@@ -140,6 +144,7 @@ function addToKycReprocssingList(string accountId) returns error? {
 
 function sendToCustomerAnalytics(string accountId) returns error? {
     log:printInfo("sending to system of records", accNo = accountId);
+    check validateCustomer(accountId);
     customer_analytics:Client customer_analyticsEp = check new (clientConfig = {
         auth: {
             clientId: clientId,
@@ -152,4 +157,13 @@ function sendToCustomerAnalytics(string accountId) returns error? {
         description: "successfully verified",
         verifiedOn: time:utcToString(time:utcNow())
     });
+}
+
+function validateCustomer(string accountId) returns error? {
+    Customer customer = check mysqlEp->queryRow(
+        sqlQuery = `SELECT * from customer WHERE account_id=${accountId}`
+    );
+    if (!regex:matches(customer.firstName, "[A-Za-z ]+") || !regex:matches(customer.lastName, "[A-Za-z ]+")) {
+        return error(string `invalid customer data for id ${accountId}`);
+    }
 }
