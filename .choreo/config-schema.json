@@ -16,23 +16,23 @@
               "type": "string",
               "description": ""
             },
-            "databaseHost": {
+            "dbHost": {
               "type": "string",
               "description": ""
             },
-            "databaseUsername": {
+            "dbUser": {
               "type": "string",
               "description": ""
             },
-            "databaseUserpassword": {
+            "dbPassword": {
               "type": "string",
               "description": ""
             },
-            "databaseName": {
+            "dbName": {
               "type": "string",
               "description": ""
             },
-            "databasePort": {
+            "dbPort": {
               "type": "integer",
               "description": ""
             }
@@ -41,11 +41,11 @@
           "required": [
             "clientSecret",
             "clientId",
-            "databaseHost",
-            "databaseUsername",
-            "databaseUserpassword",
-            "databaseName",
-            "databasePort"
+            "dbHost",
+            "dbUser",
+            "dbPassword",
+            "dbName",
+            "dbPort"
           ]
         }
       },

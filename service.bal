@@ -51,7 +51,7 @@ service / on new http:Listener(9090) {
 
             boolean validKyc = check validateKyc(c.accountId);
             if !validKyc {
-                _ = check reprocessKyc(c.accountId);
+                _ = check addToKycReprocssingList(c.accountId);
             }
 
             // send the customer info systems of record.
@@ -107,13 +107,9 @@ function validateKyc(string accountId) returns boolean|error {
     return true;
 }
 
-function reprocessKyc(string accountId) returns error? {
-    sql:ExecutionResult|error executeResponse = mysqlEp->execute(
-        sqlQuery = `INSERT INTO reprocess_kyc (account_Id) values (${accountId})`
-    );
-    if executeResponse is error {
-        return error(string `error occurred while reprocessing the kyc for the customer: ${accountId}`);
-    }
+function addToKycReprocssingList(string accountId) returns error? {
+    sql:ExecutionResult _ = check mysqlEp->execute(`INSERT INTO reprocess_kyc (account_Id) values (${accountId})`);
+    log:printInfo("sucessfully added to kyc reprocessing list", accountId = accountId);
 }
 
 function sendToSystemOfRecords(string accountId) returns error? {
