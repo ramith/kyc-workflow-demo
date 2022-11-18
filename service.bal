@@ -7,17 +7,12 @@ import ballerinax/mysql.driver as _;
 import ballerina/sql;
 
 configurable string clientSecret = ?;
-
 configurable string clientId = ?;
 
 configurable string dbHost = ?;
-
 configurable string dbUser = ?;
-
 configurable string dbPassword = ?;
-
 configurable string dbName = ?;
-
 configurable int dbPort = ?;
 
 public type Customer record {
@@ -25,6 +20,11 @@ public type Customer record {
     string firstName;
     string lastName;
     maps_api:Address address;
+};
+
+public type VerificationResult record {
+    string accountId;
+    string message;
 };
 
 mysql:Client mysqlEp = check new (
@@ -39,23 +39,37 @@ mysql:Client mysqlEp = check new (
 # bound to port `9090`.
 service / on new http:Listener(9090) {
 
-    resource function post validate(@http:Payload Customer[] customers) returns error? {
+    resource function post validate(@http:Payload Customer[] customers) returns VerificationResult[]|error {
+
+        VerificationResult[] verificationResults = [];
+
         map<future<error?>> childProcesses = {};
 
         foreach Customer c in customers {
             log:printInfo("validating customer:", accountId = c.accountId, name = string `${c.firstName} ${c.lastName}`);
             boolean validAddress = check validateAddress(c.address);
             if !validAddress {
+                verificationResults.push({
+                    accountId: c.accountId,
+                    message: "address is invalid"
+                });
+
                 continue;
             }
 
             boolean validKyc = check validateKyc(c.accountId);
             if !validKyc {
                 _ = check addToKycReprocssingList(c.accountId);
+                verificationResults.push({
+                    accountId: c.accountId,
+                    message: "invalid kyc data, added to reprocessing list"
+                });
+
+                continue;
             }
 
             // send the customer info systems of record.
-            future<error?> asyncResult = start sendToSystemOfRecords(c.accountId);
+            future<error?> asyncResult = start sendToCustomerAnalytics(c.accountId);
             childProcesses[c.accountId] = asyncResult;
         }
 
@@ -63,12 +77,22 @@ service / on new http:Listener(9090) {
             var [accountId, outcome] = entry;
             error? err = wait outcome;
             if err is () {
+
                 log:printInfo("sending customer information to system of records was successful", accountId = accountId);
+                verificationResults.push({
+                    accountId: accountId,
+                    message: "successfully verified, sent to customer analytics"
+                });
             } else {
+                verificationResults.push({
+                    accountId: accountId,
+                    message: "customer verification unsuccessful"
+                });
                 log:printError("error occurred while sending information to system of records", err);
             }
         }
 
+        return verificationResults;
     }
 
 }
@@ -112,6 +136,6 @@ function addToKycReprocssingList(string accountId) returns error? {
     log:printInfo("sucessfully added to kyc reprocessing list", accountId = accountId);
 }
 
-function sendToSystemOfRecords(string accountId) returns error? {
+function sendToCustomerAnalytics(string accountId) returns error? {
     log:printInfo("sending to system of records", accNo = accountId);
 }
