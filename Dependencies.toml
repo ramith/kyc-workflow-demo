@@ -264,6 +264,9 @@ version = "2.2.2"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
+modules = [
+	{org = "ballerina", packageName = "time", moduleName = "time"}
+]
 
 [[package]]
 org = "ballerina"
@@ -310,15 +313,29 @@ modules = [
 
 [[package]]
 org = "ramith"
+name = "customer_analytics"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "url"}
+]
+modules = [
+	{org = "ramith", packageName = "customer_analytics", moduleName = "customer_analytics"}
+]
+
+[[package]]
+org = "ramith"
 name = "customer_kyc_workflow"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "sql"},
+	{org = "ballerina", name = "time"},
 	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "mysql"},
 	{org = "ballerinax", name = "mysql.driver"},
+	{org = "ramith", name = "customer_analytics"},
 	{org = "ramith", name = "kyc_api"},
 	{org = "ramith", name = "maps_api"}
 ]

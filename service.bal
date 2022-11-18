@@ -1,9 +1,11 @@
+import ramith/customer_analytics;
 import ballerina/http;
 import ramith/maps_api;
 import ballerina/log;
 import ramith/kyc_api;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
+import ballerina/time;
 import ballerina/sql;
 
 configurable string clientSecret = ?;
@@ -138,4 +140,16 @@ function addToKycReprocssingList(string accountId) returns error? {
 
 function sendToCustomerAnalytics(string accountId) returns error? {
     log:printInfo("sending to system of records", accNo = accountId);
+    customer_analytics:Client customer_analyticsEp = check new (clientConfig = {
+        auth: {
+            clientId: clientId,
+            clientSecret: clientSecret
+        }
+    });
+    http:Response _ = check customer_analyticsEp->postCustomerVerification(payload = {
+        accountId: accountId,
+        status: "verified",
+        description: "successfully verified",
+        verifiedOn: time:utcToString(time:utcNow())
+    });
 }
