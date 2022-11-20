@@ -65,7 +65,7 @@ service / on new http:Listener(9090) {
 
             boolean validKyc = check validateKyc(c.accountId);
             if !validKyc {
-                _ = check addToKycReprocssingList(c.accountId);
+                _ = check addToKycReprocessingList(c.accountId);
                 verificationResults.push({
                     accountId: c.accountId,
                     message: "invalid kyc data, added to reprocessing list"
@@ -128,18 +128,18 @@ function validateKyc(string accountId) returns boolean|error {
         }
     });
 
-    kyc_api:KycInfo kycValidationReponse = check kycApiEp->postMapsKycAccountid(accountId);
-    if kycValidationReponse.state != "verified" {
-        log:printError("unable to find the kyc information", accountId = accountId);
+    kyc_api:KycInfo kycValidationResponse = check kycApiEp->postMapsKycAccountid(accountId);
+    if kycValidationResponse.state != "verified" {
+        log:printError("kyc validation is failed", accountId = accountId, state = kycValidationResponse.state);
         return false;
     }
 
     return true;
 }
 
-function addToKycReprocssingList(string accountId) returns error? {
+function addToKycReprocessingList(string accountId) returns error? {
     sql:ExecutionResult _ = check mysqlEp->execute(`INSERT INTO reprocess_kyc (account_Id) values (${accountId})`);
-    log:printInfo("sucessfully added to kyc reprocessing list", accountId = accountId);
+    log:printInfo("successfully added to kyc reprocessing list", accountId = accountId);
 }
 
 function sendToCustomerAnalytics(string accountId) returns error? {
