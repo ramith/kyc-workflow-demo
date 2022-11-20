@@ -163,7 +163,9 @@ function validateCustomer(string accountId) returns error? {
     Customer customer = check mysqlEp->queryRow(
         sqlQuery = `SELECT * from customer WHERE account_id=${accountId}`
     );
+    // check whether the firstName and lastName contain only upper case or lower case characters 
     if (!regex:matches(customer.firstName, "[A-Za-z ]+") || !regex:matches(customer.lastName, "[A-Za-z ]+")) {
+        log:printError("invalid customer name found", accountId = accountId);
         return error(string `invalid customer data for id ${accountId}`);
     }
 }
