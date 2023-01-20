@@ -19,11 +19,11 @@ configurable string dbName = ?;
 configurable int dbPort = ?;
 
 public type Customer record {
-    @sql:Column { name: "account_id" }
+    @sql:Column {name: "account_id"}
     string accountId;
-    @sql:Column { name: "first_name" }
+    @sql:Column {name: "first_name"}
     string firstName;
-    @sql:Column { name: "last_name" }
+    @sql:Column {name: "last_name"}
     string lastName;
     maps_api:Address address;
 };
@@ -35,9 +35,9 @@ public type VerificationResult record {
 
 mysql:Client mysqlEp = check new (
     host = dbHost,
-    user = dbUser,
-    password = dbPassword,
-    database = dbName,
+user = dbUser,
+password = dbPassword,
+database = dbName,
     port = dbPort
 );
 
@@ -101,6 +101,12 @@ service / on new http:Listener(9090) {
         return verificationResults;
     }
 
+    resource function get testresource(int param, int param2) returns int {
+
+        log:printInfo("parameters recieved", myparam1 = param, nextParam = param2);
+
+        return param + param2;
+    }
 }
 
 function validateAddress(maps_api:Address address) returns boolean|error {
